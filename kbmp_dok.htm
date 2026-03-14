@@ -1,0 +1,853 @@
+<HTML>
+  <HEAD>
+    <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=windows-1250">
+    <META NAME="author" CONTENT="Jan Mleczko">
+    <TITLE>KreślBmp 1.0 - dokumentacja</TITLE>
+    <STYLE TYPE="text/css">
+      a {color: blue}
+    </STYLE>
+  </HEAD><BODY LINK="blue" VLINK="blue">
+    <A NAME="wstep" ID="wstep"></A>
+    <H1>Dokumentacja biblioteki podprogramów KreślBmp 1.0</H1>
+    <P STYLE="text-align:right">Jan Mleczko, luty-marzec 2026</P>
+    <P>KreślBmp to biblioteka podprogramów w języku programowania ANSI C
+    pomagająca tworzyć czarno-białą grafikę rastrową, np. wykresy, jako dane
+    wyjściowe programu. Zawiera ona podprogramy:</P>
+    <UL>
+      <LI>rysowania punktów, prostokątów, odcinków, kół i trójkątów</LI>
+      <LI>zapisu obrazów na dysku jako plików w formacie BMP odczytywalnych
+      przez wiele popularnych programów, m. in. Microsoft&reg; Paint dzięki
+      czemu można je oglądać na monitorze, drukować lub konwertować na inne
+      formaty</LI>
+      <LI>pisania napisów na rysunku wbudowaną czcionką (o zmiennej
+      szerokości znaków) lub własnymi czcionkami wkompilowanymi w program
+      albo ładowanymi dynamicznie z osobnych plików (jednym wywołaniem
+      podprogramu bibliotecznego)</LI>
+    </UL>
+    <P>W bibliotece nie ma środków do bezpośredniego tworzenia wykresów na
+    podstawie funkcji czy tablicy wartości, ale ułatwia ona to zadanie
+    względem w pełni samodzielnego rysowania kształtów i sporządzania plików
+    BMP.</P>
+    <P>Program łączony z biblioteką ma łatwy dostęp do poszczególnych punktów
+    powstałego obrazu, zatem można wykorzystać podprogramy rysowania także w
+    innych celach niż stworzenie pliku BMP.</P>
+    <P>Zaletą tej biblioteki jest to, że polega ona tylko na funkcjach
+    standardowych ANSI C, a nie na innych bibliotekach ani na określonym
+    systemie operacyjnym lub cechach wybranego typu komputera, zatem jest
+    bardzo przenośna.</P>
+    <UL>
+      <LI><A HREF="#inst">Instalacja biblioteki</A></LI>
+      <LI><A HREF="#symb">Spis symboli i długie nazwy</A></LI>
+      <LI><A HREF="#wers">Informacje o wersji biblioteki</A></LI>
+      <LI><A HREF="#strona">Ogólnie o przechowywaniu rysunków</A></LI>
+      <LI>
+        Rysowanie figur - funkcje
+        <UL>
+          <LI><A HREF="#ryspt">Punkty - ryspt</A></LI>
+          <LI><A HREF="#rysodc">Odcinki - rysodc</A></LI>
+          <LI><A HREF="#ryspka">Prostokąty - ryspka</A></LI>
+          <LI><A HREF="#rystka">Trójkąty - rystka</A></LI>
+          <LI><A HREF="#ryskol">Koła wypełnione - ryskol</A></LI>
+          <LI><A HREF="#rysokr">Okręgi - rysokr</A></LI>
+        </UL>
+      </LI>
+      <LI><A HREF="#napisy">Ogólnie o napisach i czcionkach</A></LI>
+      <LI>
+        Pisanie napisów - funkcje
+        <UL>
+          <LI><A HREF="#rysnap">rysnap</A></LI>
+          <LI><A HREF="#mrznap">mrznap</A></LI>
+          <LI><A HREF="#ladcz">ladcz</A></LI>
+        </UL>
+      </LI>
+      <LI>
+        Inne funkcje
+        <UL>
+          <LI><A HREF="#zaprys">Zapis do pliku graficznego - zaprys</A></LI>
+          <LI><A HREF="#csrys">Czyszczenie strony - csrys</A></LI>
+        </UL>
+      </LI>
+    </UL>
+    <HR><BR><BR><BR><BR><BR>
+    <A NAME="inst" ID="inst"></A>
+    <A HREF="#wstep">Wstęp i spis treści</A>
+    <H2>Instalacja biblioteki</H2>
+    <P>KreślBmp powinna być konsolidowana z korzystającym z niej programem
+    jako plik obiektowy. Z racji, że różne kompilatory C mają różne formaty
+    plików obiektowych, dostarczam kod źródłowy do kompilacji u użytkownika.
+    Podane tutaj polecenia i komentarze techniczne są przystosowane do
+    kompilatora TinyCC autorstwa Fabrice Bellard w wersji dla systemu
+    operacyjnego Microsoft&reg; Windows&reg; NT. Możesz jednak użyć dowolnego
+    kompilatora ANSI C i konsolidatora.</P>
+    <P>Powinieneś zaopatrzyć się w pliki:</P>
+    <UL>
+      <LI><TT>KRESLBMP.C</TT></LI>
+      <LI><TT>KRESLBMP.H</TT> - zalecany plik nagłówkowy</LI>
+    </UL>
+    <P>Skompiluj bibliotekę do pliku obiektowego:</P>
+<PRE>
+tcc -c kreslbmp.c
+</PRE>
+    <P>Pojawi się plik o nazwie <TT>KRESLBMP.O</TT>. Chcąc wywoływać w
+    programie podprogramy z KreślBmp wpisz do niego dyrektywę wstawienia pliku
+    nagłówkowego <CODE>#include "kreslbmp.h"</CODE> (zakładając, że wszystkie
+    części biblioteki i Twoje programy opierające się o nią są w tym samym
+    katalogu). A kompilując program z biblioteką zażądaj skonsolidowania
+    otrzymanego pliku obiektowego z Twoim programem:</P>
+<PRE>
+tcc twojpr.c kreslbmp.o
+</PRE>
+    <P>Jeśli <TT>TWOJPR.C</TT> był prawidłowym formalnie programem, a wcześniej
+    przygotowałeś plik obiektowy KreślBmp, uzyskasz gotowy plik wykonywalny
+    <TT>TWOJPR.EXE</TT>. Jest on niezależny od dostępności egzemplarza tej
+    biblioteki, ponieważ ma ją w sobie. Nie dotyczy to dynamicznie ładowanych
+    czcionek przy korzystaniu z takowych.</P>
+    <P><TT>KRESLBMP.O</TT> nadaje się oczywiście do wielokrotnego użytku i nie
+    musisz tworzyć go ponownie do każdego programu zależnego od biblioteki.</P>
+    <H3>Zobacz też:</H3>
+    <UL>
+      <LI><A HREF="#symb">Spis symboli i długie nazwy</A></LI>
+      <LI><A HREF="#strona">Ogólnie o przechowywaniu rysunków</A></LI>
+    </UL>
+    <HR><BR><BR><BR><BR><BR>
+    <A NAME="symb" ID="symb"></A>
+    <A HREF="#wstep">Wstęp i spis treści</A>
+    <H2>Spis symboli i długie nazwy</H2>
+    <P>Oto spis wszystkich symboli rezerwowanych na poziomie konsolidacji przez
+    bibliotekę w wersji 1.0. Ma on zapobiec konfliktom nazw.</P>
+<PRE>
+kbmp01  rstr    szstr   wskstr  csrys
+ryspt   ryspka  rysodc  rystka  ryskol
+rysokr  zaprys  ladcz   rysnap  mrznap
+</PRE>
+    <P>Symbol <TT>kbmp01</TT> jest tylko znacznikiem dobrej wersji. Jeśli
+    pojawiłaby się nowa wersja biblioteki, zostałby on zmieniony
+    (prawdopodobnie na <TT>kbmp02</TT> itd.) blokując omyłkową konsolidację ze
+    złą wersją.</P>
+    <P>Oprócz tego funkcje biblioteczne mają zamienne, dłuższe i bardziej
+    znaczące nazwy. Za ich istnienie odpowiedzialny jest plik nagłówkowy, więc
+    jeśli go nie dołączasz albo wręcz chcesz użyć biblioteki w innym języku
+    programowania niż C, nie będą one rozpoznawane. Są makrami rozwijanymi do
+    podstawowych, krótkich nazw (wymyślonych z myślą o potencjalnych
+    ograniczeniach konsolidatora i w celu skrócenia wierszy kodu z wieloma
+    odwołaniami do biblioteki). Wobec tego można się ich pozbyć dyrektywami
+    <TT>#undef</TT> wpisanymi po dołączeniu pliku nagłówkowego.</P>
+    <TABLE BORDER="2">
+      <TR>
+        <TH SCOPE="col">Krótka nazwa<BR>podstawowa</TH>
+        <TH SCOPE="col">Nazwa długa</TH>
+      </TR><TR>
+        <TD><TT>csrys</TT></TD>
+        <TD><TT>czyscRysunek</TT></TD>
+      </TR><TR>
+        <TD><TT>ryspt</TT></TD>
+        <TD><TT>rysujPunkt</TT></TD>
+      </TR><TR>
+        <TD><TT>ryspka</TT></TD>
+        <TD><TT>rysujProstokat</TT></TD>
+      </TR><TR>
+        <TD><TT>rysodc</TT></TD>
+        <TD><TT>rysujOdcinek</TT></TD>
+      </TR><TR>
+        <TD><TT>rystka</TT></TD>
+        <TD><TT>rysujTrojkat</TT></TD>
+      </TR><TR>
+        <TD><TT>ryskol</TT></TD>
+        <TD><TT>rysujKolo</TT></TD>
+      </TR><TR>
+        <TD><TT>rysokr</TT></TD>
+        <TD><TT>rysujOkrag</TT></TD>
+      </TR><TR>
+        <TD><TT>zaprys</TT></TD>
+        <TD><TT>zapiszRysunek</TT></TD>
+      </TR><TR>
+        <TD><TT>ladcz</TT></TD>
+        <TD><TT>ladujCzcionkeZewn</TT></TD>
+      </TR><TR>
+        <TD><TT>rysnap</TT></TD>
+        <TD><TT>rysujNapis</TT></TD>
+      </TR><TR>
+        <TD><TT>mrznap</TT></TD>
+        <TD><TT>mierzSzerokNapisu</TT></TD>
+      </TR>
+    </TABLE>
+    <HR><BR><BR><BR><BR><BR
+    <A NAME="strona" ID="strona"></A>
+    <A HREF="#wstep">Wstęp i spis treści</A>
+    <H2>Ogólnie o przechowywaniu rysunków</H2>
+    <P>Sposób przechowywania obrazu roboczego w pamięci operacyjnej jest ściśle
+    ustalowny i jawny, dzięki czemu można przetwarzać go zarówno wywołując
+    podprogramy biblioteki jak i pracując na danych obrazu bez ich
+    pośrednictwa. Zapewnienie miejsca w pamięci na obraz leży po stronie
+    programu głównego.</P>
+    <P>Konieczne jest zdefiniowanie takich trzech zmiennych globalnych w Twoim
+    programie:</P>
+<PRE>
+unsigned long int rstr;
+unsigned short int szstr;
+char *wskstr;
+</PRE>
+    <P>Biblioteka odwołuje się do nich po ich nazwach. Określają one "stronę"
+    rysowania - stąd skrót "str". Znaczenie powyższych zmiennych jest
+    następujące:</P>
+    <UL>
+      <LI><CODE>szstr</CODE> - szerokość obrazu w punktach, tzw.
+      pikselach. Musi być dodatnia.</LI>
+      <LI><CODE>rstr</CODE> - rozmiar obrazu - iloczyn szerokości i wysokości,
+      ilość punktów składających się na obraz. Musi być dodatnia i być
+      wielokrotnością <CODE>szstr</CODE>.</LI>
+      <LI><CODE>wskstr</CODE> - wskaźnik na początek tablicy typu
+      <CODE>char</CODE> o rozmiarze conajmniej <CODE>rstr</CODE>.</LI>
+    </UL>
+    <P>Przeniesienie właściwej definicji tych zmiennych do programu
+    korzystającego z biblioteki sprawia, że można przynajmniej dwie pierwsze z
+    nich inicjować statycznie, jeśli wymiary pierwszego lub jedynego obrazu do
+    utworzenia są znane przy pisaniu programu.</P>
+    <P><U>Większość funkcji wymaga <DFN>zorganizowania strony rysowania</DFN>,
+    a więc stosownego ustawienia ww. zmiennych i zabronione jest ich
+    wywoływanie bez pewności, że te zmienne są prawidłowo wypełnione.</U> Mała
+    część funkcji biblioteki stanowi wyjątek - nie potrzebują one strony
+    rysowania.</P>
+    <P>Ani szerokość, ani wysokość rysunku nie może przekroczyć 65 534
+    punktów.</P>
+    <P>Można zauważyć, że biblioteka nie jest pomyślana dla programów
+    wielowątkowych. Korzystanie z niej w takich programach jest wciąż możliwe,
+    o ile zapewnimy, że będzie to się odbywało w ramach tylko jednego wątku
+    naraz.</P>
+    <P>W tablicy wskazywanej przez <TT>wskstr</TT> każda komórka typu
+    <TT>char</TT> mówi o zabarwieniu jednego punktu (zatem jest to format
+    nieupakowany). Wartość 0 koduje barwę białą, a inna - najczęściej 1 -
+    czarną. Punkty ułożone są rzędami od góry do dołu i od lewej do prawej.
+    Zatem jeśli wyobrazimy sobie obraz</P>
+    <TABLE BORDER="2">
+      <TR><TD>A</TD><TD>B</TD><TD>C</TD><TD>D</TD></TR>
+      <TR><TD>E</TD><TD>F</TD><TD>G</TD><TD>H</TD></TR>
+      <TR><TD>I</TD><TD>J</TD><TD>K</TD><TD>L</TD></TR>
+    </TABLE>
+    <P>to opisy punktów będą rozmieszczone w tablicy w kolejności</P>
+    <TABLE BORDER="2">
+      <TR>
+        <TD>A</TD><TD>B</TD><TD>C</TD><TD>D</TD><TD>E</TD><TD>F</TD><TD>G</TD>
+        <TD>H</TD><TD>I</TD><TD>J</TD><TD>K</TD><TD>L</TD>
+      </TR><TR>
+        <TH>0</TH><TH>1</TH><TH>2</TH><TH>3</TH><TH>4</TH><TH>5</TH><TH>6</TH>
+        <TH>7</TH><TH>8</TH><TH>9</TH><TH>10</TH><TH>11</TH>
+      </TR><TR>
+        <TH COLSPAN="12">Indeksy</TH>
+      </TR>
+    </TABLE>
+    <P>Zmienną <CODE>szstr</CODE> powinniśmy wtedy ustawić na 4, a
+    <CODE>rstr</CODE> na 12. Prawidłowe byłoby też ustawienie
+    <CODE>szstr</CODE> na 1, 2, 3, 6 lub 12, ale wtedy ta sama tablica
+    reprezentowałaby inny obraz o innych wymiarach.</P>
+    <P>Współrzędne liczone są od góry i lewej od zera, tzn. przy szerokości
+    strony równej 4 punkty i 3 punktach wysokości lewy górny róg będzie miał
+    współrzędne (0; 0) a prawy dolny (3; 2).</P>
+    <HR><BR><BR><BR><BR><BR>
+    <A NAME="wers" ID="wers"></A>
+    <A HREF="#wstep">Wstęp i spis treści</A>
+    <H2>Informacje o wersji biblioteki</H2>
+    <P>Po dołączeniu pliku nagłówkowego <TT>KRESLBMP.H</TT> pojawia się makro
+    <CODE>KRESLBMP</CODE>, które świadczy o dostępności KreślBmp, a ponadto
+    rozwija się do łańcucha znaków wskazującego wersję biblioteki i jej autora,
+    np. "KreslBmp 1.0, Jan Mleczko". Dzięki temu zadziała np. instrukcja</P>
+<PRE>
+puts ("Biblioteka graficzna: " KRESLBMP);
+</PRE>
+    <HR><BR><BR><BR><BR><BR>
+    <A NAME="ryspt" ID="ryspt"></A>
+    <A HREF="#wstep">Wstęp i spis treści</A>
+    <H2>Funkcja ryspt</H2>
+    <P>Pochodzenie nazwy: <EM>RYSowanie PunkTu</EM><BR>
+    Dłuższa nazwa: <CODE>rysujPunkt</CODE></P>
+<PRE>
+void ryspt (
+  int x,
+  int y)
+</PRE>
+    <P>Zaznacza na czarno punkt o określonych współrzędnych. Współrzędne mogą 
+    leżeć poza rysunkiem - nic nie zostanie wtedy narysowane, ale też nie
+    stanie się nic złego.</P>
+    <P>Wymaga zorganizowanej strony rysowania.</P>
+    <H3>Zobacz też:</H3>
+    <UL>
+      <LI><A HREF="#strona">Ogólnie o przechowywaniu rysunków</A></LI>
+    </UL>
+    <HR><BR><BR><BR><BR><BR>
+    <A NAME="ryspka" ID="ryspka"></A>
+    <A HREF="#wstep">Wstęp i spis treści</A>
+    <H2>Funkcja ryspka</H2>
+    <P>Pochodzenie nazwy: <EM>RYSowanie ProstoKĄta</EM><BR>
+    Dłuższa nazwa: <CODE>rysujProstokat</CODE></P>
+<PRE>
+void ryspka (
+  int x1,
+  int y1,
+  int x2,
+  int y2)
+</PRE>
+    <P>Rysuje wypełniony na czarno prostokąt o bokach równoległych do osi
+    układu współrzędnych. Lewy górny oraz prawy dolny wierzchołek prostokąta
+    to odpowiednio (<CODE>x1</CODE>; <CODE>y1</CODE>) oraz
+    (<CODE>x2</CODE> - 1; <CODE>y2</CODE> - 1).</P>
+    <P>Wymaga zorganizowanej strony rysowania.</P>
+    <P><IMG SRC="data:image/bmp;base64,Qk2IEAAAAAAAACAAAAAMAAAA0gCWAAEAAQD///8A
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGADAAAAwAAAAAAAAAAAAAAA
+ADAAAMAAADAAAACIiYEeAiAAAAAAAAAAAAAAAABEXgJgR4CIAAAAhQmBCAIgAAAAAAAAAAAAAAAAQog
+CYEIAiAAAAIUIAQwCIAAAAAAAAAAAAAAAAEKMAgBDAIgAAACCCAOG4iAAAAAAAAAAAAAAAABBBuIA4b
+iIAAAAhSmG0gogAAAAAAAAAAAAAAAAQpIKYbSCiAAAAMUZhFoGYAAAAAAAAAAAAAAAAGKaBmEWgZgAA
+ABoiAROAsAAAAAAAAAAAAAAAAA0TgIBE4CwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+BAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAB8AAAAAAAAAAAAAAAAAAAAAAAB8AAAAAAAAAAAfAAA
+AAAAAAAAAAAAAAAAAAAAAfAAAAAAAAAAAP/////////////////////////4AAAAAAAAAAB8AAAAAAA
+AAAAAAAAAAAAAAAAB8AAAAAAAAAAAfAAAAAAAAAAAAAAAAAAAAAAAAfAAAAAAAAAAABAAAAAAAAAAAA
+AAAAAAAAAAAABAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAEAAAAAAAAAAAAAAAA
+AAAAAAAAEAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAA
+AAAAQAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAB
+AAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAEAAAA
+AAAAAAABAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAA
+AAAEAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAQ
+AAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAABAAAAA
+AAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAEAAAAAAAAA
+AAAAAAAAAAAAAAAEAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAQAAAAAAAAAAAAA
+AAAAAAAAAAAQAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAABAAAAAAAAAAAAAAAAAA
+AAAAAABAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAA
+AAEAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAQA
+AAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAABAAAAAA
+AAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAA
+ABAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAEAA
+AAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAQAAAAAA
+AAAAAAAAAAAAAAAAAAQAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAABAAAAAAAAAAA
+AAAAAAAAAAAAABAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAEAAAAAAAAAAAAAAA
+AAAAAAAAAEAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAQAAB9FFFzikUXCKIO+il
+E4AAAQAAAAAAAAAAAEAAAQRRRRt9FNAmiGIIpTbAAAEAAAAAAAAAAABAAACH0X0RVfTQJvhBD6k0QAA
+BAAAAAAAAAAAAQAAAQpUpEVSlXCpQQIU5VEAAAQAAAAAAAAAAAEAAACKbKRFEplAyUEBFJZRAAAEAAA
+AAAAAAAABAAAARGxEbREZQMiBgIiWWwAABAAAAAAAAAAAAQAAB8RERDkREXCIgO+I5E4AAAQAAAAAAA
+AAAAEAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAABAAAAAAAAAAAAMAAAAAAAAAAABAAAAAAAAAAAA
+QAAAAAAAAEcGEc+7gAAAAAAAAQAAAAAAAAAAAEAAAAAAAABNhQloEgAAAAAAAAEAAAAAAAAAAABAAAA
+AAAAASIV9JBIAAAAAAAABAAAAAAAAAAAAQAAAAAAAAEiGQSITgAAAAAAAAQAAAAAAAAAAAEAAAAAAAA
+BIhX0hEgAAAAAAAAEAAAAAAAAAAABAAAAAAAAATYVBYJIAAAAAAAABAAAAAAAAAAAAQAAAAAAAAOcGf
+c+7gAAAAAAAAQAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAABAAAAAAAAAAAAAAAAA
+AAAAAAABAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAA
+AAAEAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAQ
+AAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAABAAAAA
+AAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAA
+AABAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAEA
+AAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAQAAAAA
+AAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAABAAAAAAAAAA
+AAAAAAAAAAAAAABAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAEAAAAAAAAAAAAAA
+AAAAAAAAAAEAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAA
+AAAAAAQAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAA
+ABAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAEAA
+AAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAA
+AAAAAEAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAA
+AQAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAABAAA
+AAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAEAAAAAAA
+AAAAAAAAAAAAAAAAAEAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAQAAAAAAAAAAA
+AAAAAAAAAAAAAQAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAABAAAAAAAAAAAAAAAA
+AAAAAAAABAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAfAAAAAAAAAAAAAAAAAAAA
+AAAAfAAAAAAAAAAAHwAAAAAAAAAAAAAAAAAAAAAAAHwAAAAAAAAAAD/////////////////////////
++AAAAAAAAAAAfAAAAAAAAAAAAAAAAAAAAAAAAfAAAAAAAAAAAHwAAAAAAAAAAAAAAAAAAAAAAAHwAAA
+AAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGADAAGAAAAAAAAAAAAAAAAAABgAAGAAMAAAAACIiY
+EEQAAAAAAAAAAAAAAAAAAiLwEwIIgAAAAAhQmBBEAAAAAAAAAAAAAAAAAAIUQBMCCIAAAAAIUIAQRAA
+AAAAAAAAAAAAAAAACFGAQAgiAAAAACCCAOEQAAAAAAAAAAAAAAAAAAgg3EAcIgAAAAAhSmG1EAAAAAA
+AAAAAAAAAAAAIUkFMNqIAAAAAMUZhEzAAAAAAAAAAAAAAAAAADFNAzCJmAAAAABoiARFgAAAAAAAAAA
+AAAAAAAAaJwEAiLAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+    ><BR>Ilustracja powstała zresztą z pomocą biblioteki.</P>
+    <P>Jeśli prostokąt określony współrzędnymi wychodzi poza stronę, zostanie
+    narysowana ta jego część, która przecina obszar rysowania.</P>
+    <H3>Zobacz też:</H3>
+    <UL>
+      <LI><A HREF="#strona">Ogólnie o przechowywaniu rysunków</A></LI>
+    </UL>
+    <HR><BR><BR><BR><BR><BR>
+    <A NAME="rysodc" ID="rysodc"></A>
+    <A HREF="#wstep">Wstęp i spis treści</A>
+    <H2>Funkcja rysodc</H2>
+    <P>Pochodzenie nazwy: <EM>RYSowanie ODCinka</EM><BR>
+    Dłuższa nazwa: <CODE>rysujOdcinek</CODE>.</P>
+<PRE>
+void rysodc (
+  int x1,
+  int y1,
+  int x2,
+  int y2)
+</PRE>
+    <P>Rysuje czarny odcinek o końcach (<CODE>x1</CODE>; <CODE>y1</CODE>)
+    i (<CODE>x2</CODE>; <CODE>y2</CODE>), a przynajmniej jego część leżącą
+    wewnątrz rysunku.</P>
+    <P>Wymaga zorganizowanej strony rysowania. Rozciągłość figury i liczba do
+    niej przeciwna muszą mieścić się w zakresie typu <CODE>int</CODE>.</P>
+    <H3>Zobacz też:</H3>
+    <UL>
+      <LI><A HREF="#strona">Ogólnie o przechowywaniu rysunków</A></LI>
+    </UL>
+    <HR><BR><BR><BR><BR><BR>
+    <A NAME="rystka" ID="rystka"></A>
+    <A HREF="#wstep">Wstęp i spis treści</A>
+    <H2>Funkcja rystka</H2>
+    <P>Pochodzenie nazwy: <EM>RYSowanie TrójKĄta</EM><BR>
+    Dłuższa nazwa: <CODE>rysujTrojkat</CODE></P>
+<PRE>
+void rystka (
+  int x1,
+  int y1,
+  int x2,
+  int y2,
+  int x3,
+  int y3)
+</PRE>
+    <P>Rysuje wypełniony na czarno trójkąt ABC, gdzie<BR>
+    A(<CODE>x1</CODE>; <CODE>y1</CODE>) B(<CODE>x2</CODE>; <CODE>y2</CODE>)
+    C(<CODE>x3</CODE>; <CODE>y3</CODE>).</P>
+    <P>Wymaga zorganizowanej strony rysowania. Rozciągłość figury i liczba do
+    niej przeciwna muszą mieścić się w zakresie typu <CODE>int</CODE>.</P>
+    <H3>Zobacz też:</H3>
+    <UL>
+      <LI><A HREF="#strona">Ogólnie o przechowywaniu rysunków</A></LI>
+    </UL>
+    <HR><BR><BR><BR><BR><BR>
+    <A NAME="ryskol" ID="ryskol"></A>
+    <A HREF="#wstep">Wstęp i spis treści</A>
+    <H2>Funkcja ryskol</H2>
+    <P>Pochodzenie nazwy: <EM>RYSowanie KOŁa</EM><BR>
+    Dłuższa nazwa: <CODE>rysujKolo</CODE></P>
+<PRE>
+void ryskol (
+                 int sx,
+                 int sy,
+  unsigned short int prom)
+</PRE>
+    <P>Rysuje wypełnione na czarno koło mające za środek punkt
+    (<CODE>sx</CODE>; <CODE>sy</CODE>) o promieniu <CODE>prom</CODE>, a
+    przynajmniej tę jego część, która wypada w granicach strony rysowania.</P>
+    <P>Wymaga zorganizowanej strony rysowania. Rozciągłość figury i liczba do
+    niej przeciwna muszą mieścić się w zakresie typu <CODE>int</CODE>.</P>
+    <H3>Zobacz też:</H3>
+    <UL>
+      <LI><A HREF="#rysokr">Funkcja rysokr</A></LI>
+      <LI><A HREF="#strona">Ogólnie o przechowywaniu rysunków</A></LI>
+    </UL>
+    <HR><BR><BR><BR><BR><BR>
+    <A NAME="rysokr" ID="rysokr"></A>
+    <A HREF="#wstep">Wstęp i spis treści</A>
+    <H2>Funkcja rysokr</H2>
+    <P>Pochodzenie nazwy: <EM>RYSowanie OKRęgu</EM><BR>
+    Dłuższa nazwa: <CODE>rysujOkrag</CODE></P>
+<PRE>
+void rysokr (
+                 int sx,
+                 int sy,
+  unsigned short int prom)
+</PRE>
+    <P>Rysuje obrys okręgo mającego za środek punkt (<CODE>sx</CODE>;
+    <CODE>sy</CODE>) o promieniu <CODE>prom</CODE>, a przynajmniej tę jego
+    część, która wypada w granicach strony rysowania.</P>
+    <P>Wymaga zorganizowanej strony rysowania. Rozciągłość figury i liczba do
+    niej przeciwna muszą mieścić się w zakresie typu <CODE>int</CODE>.</P>
+    <H3>Zobacz też:</H3>
+    <UL>
+      <LI><A HREF="#ryskol">Funkcja ryskol</A></LI>
+      <LI><A HREF="#strona">Ogólnie o przechowywaniu rysunków</A></LI>
+    </UL>
+    <HR><BR><BR><BR><BR><BR>
+    <A NAME="csrys" ID="csrys"></A>
+    <A HREF="#wstep">Wstęp i spis treści</A>
+    <H2>Funkcja csrys</H2>
+    <P>Pochodzenie nazwy: <EM>CzySzczenie RYSunku</EM><BR>
+    Dłuższa nazwa: <CODE>czyscRysunek</CODE></P>
+<PRE>
+void csrys ()
+</PRE>
+    <P>Czyści stronę rysowania - barwi cały rysunek na biało.</P>
+    <P>Wymaga zorganizowanej strony rysowania.</P>
+    <H3>Zobacz też:</H3>
+    <UL>
+      <LI><A HREF="#strona">Ogólnie o przechowywaniu rysunków</A></LI>
+    </UL>
+    <HR><BR><BR><BR><BR><BR>
+    <A NAME="rysnap" ID="rysnap"></A>
+    <A HREF="#wstep">Wstęp i spis treści</A>
+    <H2>Funkcja rysnap</H2>
+    <P>Pochodzenie nazwy: <EM>RYSowanie NAPisu</EM><BR>
+    Dłuższa nazwa: <CODE>rysujNapis</CODE></P>
+<PRE>
+void rysnap (
+                  int px,
+                  int py,
+                 char wyrown,
+  unsigned char const *czcion,
+        unsigned char wielk,
+  unsigned char const *tekst)
+</PRE>
+    <P>Wypisuje na rysunku napis <CODE>tekst</CODE> zakończony znakiem zerowym
+    czcionką wskazaną przez <CODE>czcion</CODE> albo czcionką wbudowaną, gdy
+    <CODE>czcion</CODE> to NULL. Napis może być wielowierszowy.</P>
+    <P>Wymaga zorganizowanej strony rysowania.</P>
+    <P><CODE>py</CODE> - współrzędna Y początku napisu.<BR>
+    <CODE>wyrown</CODE> - wyrównanie poziome, dozwolone wartości:</P>
+    <UL>
+      <LI><CODE>'L'</CODE> - do lewej, <CODE>px</CODE> to współrzędna X lewej
+      krawędzi tekstu</LI>
+      <LI><CODE>'S'</CODE> - do środka, <CODE>px</CODE> to współrzędna X środka
+      tekstu w poziomie</LI>
+      <LI><CODE>'P'</CODE> - do prawej, <CODE>px</CODE> to współrzędna X prawej
+      krawędzi napisu</LI>
+    </UL>
+    <P><CODE>wielk</CODE> - wielkość czcionki, czyli wysokość znaków od 1 do
+    256 w przypadku używania czcionki wektorowej. Dotyczy tylko czcionek
+    wektorowych i dla tych zwykłych jest bez znaczenia, ale zalecana liczba
+    zastępcza to 8. Wbudowana czcionka nie jest wektorowa.</P>
+    <H3>Zobacz też:</H3>
+    <UL>
+      <LI><A HREF="#mrznap">Funkcja mrznap</A></LI>
+      <LI><A HREF="#napisy">Ogólnie o napisach i czcionkach</A></LI>
+      <LI><A HREF="#strona">Ogólnie o przechowywaniu rysunków</A></LI>
+    </UL>
+    <HR><BR><BR><BR><BR><BR>
+    <A NAME="napisy" ID="napisy"></A>
+    <A HREF="#wstep">Wstęp i spis treści</A>
+    <H2>Ogólnie o napisach i czcionkach</H2>
+    <P>Niektórzy sądzą, że "obraz jest wart więcej niż tysiąc słów", ale tak
+    naprawdę najlepsze jest ich połączenie. KreślBmp wspomaga wzbogacanie
+    rysunków opisami.</P>
+    <P>Jeden napis może mieć wiele wierszy zawierając w sobie znak nowego
+    wiersza <CODE>'\n'</CODE> i może być wypisany wybranym krojem pisma, w tym
+    jednym wbudowanym w bibliotekę. Obsługiwane są czcionki o zmiennej
+    szerokości znaków (a nawet czcionka wbudowana taka jest), natomiast
+    wysokość znaków, nawet przy własnych czcionkach jest ograniczona do
+    <STRONG>8 pikseli</STRONG>.</P>
+    <P>Przewidziano także <U>czcionki wektorowe</U>, które mogą mieć wysokość
+    znaku większą niż 8. Wysokość ta jest zadawana przy pisaniu napisu - jedną
+    czcionką wektorową można wypisywać tekst różnej wielkości dzięki
+    skalowaniu.</P>
+    <P>W jednym napisie można korzystać z 253 różnych znaków (o 8-bitowych
+    kodach od 1 do 9 i od 11 do 255), jeśli czcionka posiada ich tyle. Czionka
+    może mieć mniej znaków, mniej niż jest w ASCII, ale każda czcionka musi
+    zawierać znak zapytania, który stanowi zamiennik dla wszystkich znaków
+    niezawartych w czcionce przy próbie ich wypisania.</P>
+    <H3>Czcionka wewnętrzna</H3>
+    <P>Dzięki wbudowanej czcionce typowe zastosowania KreślBmp nie wymagają
+    opracowywania czcionki. Zawiera ona wielkie litery włącznie z polskimi
+    znakami kodowanymi w CP852, cyfry oraz wybrane inne znaki ASCII:</P>
+    <P>. , : - + ? ! ( ) = &lt; &gt; ~ ; { } % \ / |</P>
+    <P>Pozwala również pisać dodatkowe znaki z poza ASCII zakodowane dla wygody
+    jako niektóre małe litery:</P>
+    <TABLE BORDER="2">
+      <TR>
+        <TH SCOPE="col">Mała litera</TH>
+        <TH SCOPE="col">Dodatkowy znak w czcionce</TH>
+      </TR><TR>
+        <TD><TT>a</TT></TD>
+        <TD>
+          <IMG WIDTH="15" HEIGHT="24" SRC="data:image/bmp;base64,Qk1AAAAAAAAAAC
+          AAAAAMAAAABQAIAAEAAQD///8AAAAAAAAAIAAAAHAAAABQAAAA2AAAAIgAAAAAAAAAAAA
+          AAA=="> alternatywa logiczna
+        </TD>
+      </TR><TR>
+        <TD><TT>c</TT></TD>
+        <TD>
+          <IMG WIDTH="24" HEIGHT="24" SRC="data:image/bmp;base64,Qk1AAAAAAAAAAC
+          AAAAAMAAAACAAIAAEAAQD///8AAAAAAAAAgQAAAIEAAABCAAAAJAAAABgAAAAAAAAAAAA
+          AAA=="> część wspólna zbiorów
+        </TD>
+      </TR><TR>
+        <TD><TT>d</TT></TD>
+        <TD>
+          <IMG WIDTH="15" HEIGHT="24" SRC="data:image/bmp;base64,Qk1AAAAAAAAAAC
+          AAAAAMAAAABQAIAAEAAQD///8AAAAAAAAA+AAAAIgAAABQAAAAcAAAACAAAAAAAAAAAAA
+          AAA=="> grecka litera delta
+        </TD>
+      </TR><TR>
+        <TD><TT>e</TT></TD>
+        <TD>
+          <IMG WIDTH="30" HEIGHT="24" SRC="data:image/bmp;base64,Qk1AAAAAAAAAAC
+          AAAAAMAAAACgAIAAEAAQD///8AAAAAAAAAEgAAACEAAAA/gAAAwEAAAH+AAAAhAAAAEgA
+          AAA=="> równoważność logiczna
+        </TD>
+      </TR><TR>
+        <TD><TT>i</TT></TD>
+        <TD>
+          <IMG WIDTH="30" HEIGHT="24" SRC="data:image/bmp;base64,Qk1AAAAAAAAAAC
+          AAAAAMAAAACgAIAAEAAQD///8AAAAAAAAAAgAAAAEAAAD/gAAAAEAAAP+AAAABAAAAAgA
+          AAA=="> implikacja logiczna
+        </TD>
+      </TR><TR>
+        <TD><TT>k</TT></TD>
+        <TD>
+          <IMG WIDTH="15" HEIGHT="24" SRC="data:image/bmp;base64,Qk1AAAAAAAAAAC
+          AAAAAMAAAABQAIAAEAAQD///8AAAAAAAAAiAAAANgAAABQAAAAcAAAACAAAAAAAAAAAAA
+          AAA=="> koniunkcja logiczna
+        </TD>
+      </TR><TR>
+        <TD><TT>l</TT></TD>
+        <TD>
+          <IMG WIDTH="33" HEIGHT="24" SRC="data:image/bmp;base64,Qk1AAAAAAAAAAC
+          AAAAAMAAAACwAIAAEAAQD///8AAAAAAAAAhEAAAEqgAAAkQAAAEAAAAEgAAACkAAAAQgA
+          AAA=="> promil
+        </TD>
+      </TR><TR>
+        <TD><TT>m</TT></TD>
+        <TD>
+          <IMG WIDTH="15" HEIGHT="24" SRC="data:image/bmp;base64,Qk1AAAAAAAAAAC
+          AAAAAMAAAABQAIAAEAAQD///8AAAAYAAAAcAAAAMAAAAAYAAAAcAAAAMAAAABwAAAAGAA
+          AAA=="> ładny znak "mniejsze lub równe"
+        </TD>
+      </TR><TR>
+        <TD><TT>n</TT></TD>
+        <TD>
+          <IMG WIDTH="15" HEIGHT="24" SRC="data:image/bmp;base64,Qk1AAAAAAAAAAC
+          AAAAAMAAAABQAIAAEAAQD///8AAAAAAAAAAAAAAHgAAADAAAAA8AAAAMAAAAB4AAAAAAA
+          AAA=="> przynależność elementu do zbioru
+        </TD>
+      </TR><TR>
+        <TD><TT>o</TT></TD>
+        <TD>
+          <IMG WIDTH="15" HEIGHT="24" SRC="data:image/bmp;base64,Qk1AAAAAAAAAAC
+          AAAAAMAAAABQAIAAEAAQD///8AAAAAAAAA2AAAAFAAAABQAAAA2AAAAIgAAADYAAAAcAA
+          AAA=="> grecka litera omega
+        </TD>
+      </TR><TR>
+        <TD><TT>p</TT></TD>
+        <TD>
+          <IMG WIDTH="15" HEIGHT="24" SRC="data:image/bmp;base64,Qk1AAAAAAAAAAC
+          AAAAAMAAAABQAIAAEAAQD///8AAAAAAAAAUAAAAFAAAABQAAAA+AAAAAAAAAAAAAAAAAA
+          AAA=="> grecka litera pi
+        </TD>
+      </TR><TR>
+        <TD><TT>r</TT></TD>
+        <TD>
+          <IMG WIDTH="18" HEIGHT="24" SRC="data:image/bmp;base64,Qk1AAAAAAAAAAC
+          AAAAAMAAAABgAIAAEAAQD///8AAACAAAAAQAAAAPwAAAAgAAAAEAAAAPwAAAAIAAAABAA
+          AAA=="> znak "różne"
+        </TD>
+      </TR><TR>
+        <TD><TT>s</TT></TD>
+        <TD>
+          <IMG WIDTH="24" HEIGHT="24" SRC="data:image/bmp;base64,Qk1AAAAAAAAAAC
+          AAAAAMAAAACAAIAAEAAQD///8AAAAAAAAAGAAAACQAAABCAAAAgQAAAIEAAAAAAAAAAAA
+          AAA=="> suma zbiorów
+        </TD>
+      </TR><TR>
+        <TD><TT>t</TT></TD>
+        <TD>
+          <IMG WIDTH="9" HEIGHT="24" SRC="data:image/bmp;base64,Qk1AAAAAAAAAACA
+          AAAAMAAAAAwAIAAEAAQD///8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAACgAAAAQAAA
+          AA=="> stopnie
+        </TD>
+      </TR><TR>
+        <TD><TT>w</TT></TD>
+        <TD>
+          <IMG WIDTH="15" HEIGHT="24" SRC="data:image/bmp;base64,Qk1AAAAAAAAAAC
+          AAAAAMAAAABQAIAAEAAQD///8AAADAAAAAcAAAABgAAADAAAAAcAAAABgAAABwAAAAwAA
+          AAA=="> ładny znak "większe lub równe"
+        </TD>
+      </TR><TR>
+        <TD><TT>x</TT></TD>
+        <TD>
+          <IMG WIDTH="12" HEIGHT="24" SRC="data:image/bmp;base64,Qk1AAAAAAAAAAC
+          AAAAAMAAAABAAIAAEAAQD///8AAAAAAAAAAAAAAGAAAADwAAAA8AAAAGAAAAAAAAAAAAA
+          AAA=="> polski znak mnożenia, wypunktowanie
+        </TD>
+      </TR>
+    </TABLE>
+    <H2>Kompilacja bez czcionki wbudowanej</H2>
+    <P>Gdy używamy wyłącznie zewnętrznych czcionek albo w ogóle nie korzystamy
+    z podprogramów pisania napisów z KreślBmp, możemy podczas kompilacji
+    biblioteki zaoszczędzić miejsce na czcionce wbudowanej. Robi się to
+    wprowadzając przełącznik <TT>-DBEZCZC</TT> przed nazwą <TT>kreslbmp.c</TT>
+    w poleceniu kompilacji biblioteki do pliku obiektowego. Jest to dla TinyCC
+    nakaz utworzenia makra o nazwie <TT>BEZCZC</TT>, który przeznaczony dla
+    innego kompilatora może wyglądać oczywiście inaczej.</P>
+    <P>Po takiej zmianie odwołanie się do czcionki wewnętrznej nadal będzie
+    bezpieczne, ale skończy się wypisaniem wszystkich znaków jako pytajników.
+    Oszczędność miejsca wyniesie około 526 B, ale różnica wielkości pliku
+    wykonywalnego lub obietkowego zależy także od zasad wyrównania ich
+    rozmiaru.</P>
+    <H3>Własne zewnętrzne czcionki</H3>
+    <P>Czcionka wbudowana jest najprostszy wyborem, ale użytkownik nie jest do
+    niej ograniczony. Można tworzyć własne czcionki w celu polepszenia estetyki
+    tekstu albo dodania znaków potrzebnych w jakiejś dziedzinie. Najpierw
+    trzeba poznać format czcionek przyjmowany przez KreślBmp.</P>
+    <P>Zaczynam od zwykłych czcionek. Format czcionek wektorowych jest
+    udokumentowany niżej.</P>
+    <P>Czcionka to tablica typu <CODE>unsigned char</CODE>, a żeby jej użyć,
+    wystarczy wskaźnik do jej początku. Jest ciągiem grafik znaków. Pojedyncza
+    grafika znaku składa się z:</P>
+    <OL TYPE="a">
+      <LI>kodu znaku - 1 bajt. Nie zaleca się stosować kodów 0 ani 10, ponieważ
+      pierwszy z nich kończy treść napisu, a drugi powoduje przejście do nowego
+      wiersza, więc nie dojdzie do wyświetlenia takiej grafiki.</LI>
+      <LI>rozmiaru wpisu - 1 bajt. Chodzi o rozmiar dalszej części wpisu z
+      wliczonym bajtem rozmiaru, ale nie bajtem kodu znaku.</LI>
+      <LI>
+        Dla każdej <B>kolumny</B> grafiki znaku od lewej:
+        <UL>
+          <LI>1 bajta, którego bity od najstarszego do najmłodszego dotyczą
+          punktów kolumny <B>od dołu</B> do góry. Jedynka oznacza czerń, a
+          zero przeźroczystość.</LI>
+        </UL>
+        Ilość kolumn i tym samym szerokość znaku zależy od rozmiaru wpisu. W
+        szczególności znak może mieć zerową szerokość.
+      </LI>
+    </OL>
+    <P>Zaraz po rekordzie o jednym znaku jest miejsce na kolejny. Nie ma
+    żadnego nagłówka na początku ani żadnych danych między rekordami.</P>
+    <P><B>Obowiązkowym znakiem</B> w każdej czcionce jest pytajnik ASCII, tzn.
+    znak o kodzie 63. Jakkolwiek nie musi on wyglądać jak znak zapytania, musi
+    istnieć w każdej prawidłowej czcionce z takiego powodu, że pytajnikami
+    zastępowane są wszystkie znaki z tekstu niemające swojej grafiki w
+    czcionce. Grafika znaku zapytania musi być <B>ostatnia</B>.</P>
+    <P>W grafikach znaków zbędne są marginesy, ponieważ 1-pikselowe odstępy
+    między znakami i wierszami są dodawane osobno.</P>
+    <P>Tablicę bajtów zgodną z powyższymi zasadami można traktować jako
+    czcionkę.</P>
+    <H3>Format czcionek wektorowych</H3>
+    <P>W czcionce wektorowej grafika każdego znaku jest zbiorem odcinków o
+    określonych końcach. Współrzędne końców odcinków mają być takie, jakby
+    wysokość znaku wynosiła 256. Gdy czcionka zostaje użyta z żądaniem
+    mniejszej wysokości, grafika wektorowa ulega proporcjonalnemu
+    przeskalowaniu.</P>
+    <P>Czcionka wektorowa również składa się z następujących bezpośrednio po
+    sobie grafik znaków. Wciąż musi koniecznie zawierać znak zapytania jako
+    ostatni. Format czcionki wektorowej:</P>
+    <OL TYPE="a">
+      <LI>Nagłówek odróżniający czcionkę wektorową od zwykłej - 2 bajty,
+      szesnastkowo <TT>57 00</TT> (czyli wielka litera "W" w ASCII oraz bajt
+      zerowy).</LI>
+      <LI>
+        Dla każdego uwzględnionego znaku:
+        <OL TYPE="a">
+          <LI>kod znaku - 1 bajt. Ws. kodów 0 i 10 jak dla zwykłych
+          czionek.</LI>
+          <LI>rozmiar wpisu o znaku od tego bajta włącznie - 1 bajt. Rozmiar
+          wpisu w czionce wektorowej podzielony przez 4 musi zawsze dawać
+          resztę 2.</LI>
+          <LI>szerokość znaku - 1 bajt. Może być zerowa.</LI>
+          <LI>
+            Dla każdego odcinka AB, gdzie A(x<SUB>A</SUB>;&nbsp;y<SUB>A</SUB>)
+            B(x<SUB>B</SUB>;&nbsp;y<SUB>B</SUB>), będącego częścią grafiki po 4
+            bajty:
+            <OL TYPE="a">
+              <LI>współrzędna x<SUB>A</SUB> - 1 bajt. Wartości współrzędnych X
+              są zawsze mniejsze niż szerokość znaku.</LI>
+              <LI>współrzędna y<SUB>A</SUB> - 1 bajt.</LI>
+              <LI>współrzędna x<SUB>B</SUB> - 1 bajt.</LI>
+              <LI>współrzędna y<SUB>B</SUB> - 1 bajt.</LI>
+            </OL>
+          </LI>
+        </OL>
+      </LI>
+    </OL>
+    <P>W przypadku czcionek wektorowych przerwy między znakami ani między
+    wierszami nie są dodawane przez bibliotekę, zatem chcąc uniknąć
+    "zlepionych" znaków należy zawrzeć marginesy w grafikach.</P>
+    <H3>Dynamiczne ładowanie czcionek i format plików <EM>Jan Mleczko
+    Font</EM></H3>
+    <P>Ang. font - czcionka (w sensie niniejszej dokumentacji)</P>
+    <P>Pochodzenie czcionek stosowanych z biblioteką KreślBmp w programie może
+    być dowolne. Możliwe jest rozwiązanie najprostsze, tzn. wpisywanie czcionek
+    w program jako stałe tablice aż po tworzenie czcionek podczas działania
+    programu na podstawie danych wejściowych. W szczególności może okazać się
+    korzystne zagospodarowanie jednej czcionki na jeden plik dostarczany obok
+    pliku wykonywalnego. Na taki sposób postępowania biblioteka KreślBmp jest
+    specjalnie przygotowana. Obsługuje ładowanie czcionek wprost z plików
+    odpowiedniego formatu.</P>
+    <P>Ów format nazywa się Jan Mleczko Font od jego autora i jest pochodną
+    wyżej opisanego formatu czcionek załadowanych do pamięci operacyjnej.
+    Różnicą jest nagłówek na początku. Elementy pliku typu Jan Mleczko Font
+    to:</P>
+    <OL TYPE="a">
+      <LI>8-bajtowa sygnatura formatu - tekst <TT>J.M.Font</TT> w ASCII;</LI>
+      <LI>rozmiar reszty pliku na 2 bajtach ze starszym bajtem jako
+      pierwszym;</LI>
+      <LI>dane czcionki zwykłej albo wektorowej we wcześniej opisanym formacie
+      mające łączny rozmiar określony w b).</LI>
+    </OL>
+    <P>Zabronione jest dopisywanie czegokolwiek do pliku po zakończeniu jego
+    struktury. Czwartym przewidywanym elementem pliku Jan Mleczko Font jest
+    koniec pliku.</P>
+    <H3>Zobacz też:</H3>
+    <UL>
+      <LI><A HREF="#inst">Instalacja biblioteki</A></LI>
+    </UL>
+    <HR><BR><BR><BR><BR><BR>
+    <A NAME="mrznap" ID="mrznap"></A>
+    <A HREF="#wstep">Wstęp i spis treści</A>
+    <H2>Funkcja mrznap</H2>
+    <P>Pochodzenie nazwy: <EM>MieRZenie NAPisu</EM><BR>
+    Dłuższa nazwa: <CODE>mierzSzerokNapisu</CODE></P>
+<PRE>
+unsigned int mrznap (
+  unsigned char const *czcion,
+                  int wielk,
+  unsigned char const *tekst)
+</PRE>
+    <P>"Mierzy" napis <CODE>tekst</CODE>, tzn. oblicza i zwraca szerokość, jaką
+    miałby on wypisany funkcją <CODE>rysnap</CODE> przy wskazanej czcionce i
+    dla czcionki wektorowej również jej żądanej wielkości.</P>
+    <P>W przypadku wielowierszowego tekstu rozpatrywana jest szerokość, na jaką
+    rozepcha go najszerszy wiersz.</P>
+    <P><CODE>czcion</CODE> - wskaźnik na czcionkę lub NULL jako wybór czcionki
+    wbudowanej.</P>
+    <P><CODE>wielk</CODE> - wielkość czcionki, czyli wysokość znaków od 1 do
+    256 w przypadku używania czcionki wektorowej. Dotyczy tylko czcionek
+    wektorowych i dla tych zwykłych jest bez znaczenia, ale zalecana liczba
+    zastępcza to 8. Wbudowana czcionka nie jest wektorowa.</P>
+    <H3>Zobacz też:</H3>
+    <UL>
+      <LI><A HREF="#rysnap">Funkcja rysnap</A></LI>
+      <LI><A HREF="#napisy">Ogólnie o napisach i czcionkach</A></LI>
+    </UL>
+    <HR><BR><BR><BR><BR><BR>
+    <A NAME="ladcz" ID="ladcz"></A>
+    <A HREF="#wstep">Wstęp i spis treści</A>
+    <H2>Funkcja ladcz</H2>
+    <P>Pochodzenie nazwy: <EM>ŁADowanie CZCionki</EM><BR>
+    Dłuższa nazwa: <CODE>ladujCzcionkeZewn</CODE></P>
+<PRE>
+unsigned char *ladcz (
+  char *nazwa)
+</PRE>
+    <P>Ładuje czcionkę z pliku w formacie <EM>Jan Mleczko Font</EM> pod nazwą
+    lub ścieżką dostępu <CODE>nazwa</CODE>. Zwraca wskaźnik na czcionkę w nowo
+    zajętym obszarze sterty, więc kiedyś trzeba zwolnić ten obszar funkcją
+    standardową <CODE>free</CODE>. W razie niemożności załadowania czcionki
+    zwracane jest NULL. Przeprowadzana jest weryfikacja zawartości pliku i jeśli
+    nie jest on prawidłowym plikiem czcionki, to również wtedy funkcja zwraca
+    NULL. Przekazywanie czcionki załadowanej tą funkcją z dowolnego pliku do
+    funkcji przyjmujących czcionkę jest bezpieczne.</P>
+    <H3>Zobacz też:</H3>
+    <UL>
+      <LI><A HREF="#napisy">Ogólnie o napisach i czcionkach</A></LI>
+    </UL>
+    <HR><BR><BR><BR><BR><BR>
+    <A NAME="zaprys" ID="zaprys"></A>
+    <A HREF="#wstep">Wstęp i spis treści</A>
+    <H2>Funkcja zaprys</H2>
+    <P>Pochodzenie nazwy: <EM>ZAPis RYSunku</EM><BR>
+    Dłuższa nazwa: <CODE>zapiszRysunek</CODE></P>
+<PRE>
+int zaprys (
+  char *nazwa)
+</PRE>
+    <P>Wymaga zorganizowanej strony rysowania.</P>
+    <P>Zapisuje rysunek jako plik w formacie BMP pod nazwą lub ścieżką
+    <CODE>nazwa</CODE>. Jeśli taki plik już istniał, jest nadpisywany. Zwraca
+    "prawdę" po w pełni pomyślnym zapisie albo 0, gdy ten się nie uda.</P>
+    <H3>Zobacz też:</H3>
+    <UL>
+      <LI><A HREF="#strona">Ogólnie o przechowywaniu rysunków</A></LI>
+    </UL>
+  </BODY>
+</HTML>
